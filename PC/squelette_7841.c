@@ -58,6 +58,9 @@ static unsigned int irq_7841; // IRQ carte CAN
 /*déclaration de tâches */
 static RT_TASK ma_tache;
 
+/* custom fcts */
+void com_test();
+
 /*******************************************************/
 /* recherche adresse et IRQ de la carte CAN sur le PCI */
 /******************************************************/
@@ -106,9 +109,22 @@ int init_7841(void)
 /********************************************************/
 void init_can(void) 
 {
-  /*****************/
-  /* A COMPLETER   */
-  /*****************/
+  outb(0x01, SJA1000_REG_CONTROL); /* Reset mode */
+  outb(0xFF, SJA1000_REG_ACC_CODE); /* filter pattern */
+  outb(0xFF, SJA1000_REG_ACC_MASK); /* accept all frames */
+  outb(0x03, SJA1000_REG_BUS_TIME0);
+  outb(0x1C, SJA1000_REG_BUS_TIME1);
+  outb(0xFA, SJA1000_REG_OUTPUT_CTRL);
+  outb(0x00, SJA1000_REG_CONTROL); /* no ITs & Reset mode off */
+
+  com_test();
+}
+
+void com_test(){
+#define ID (char)20
+
+  outb(ID>>3, SJA1000_REG_TX_ID);
+  outb(ID<<8, SJA1000_REG_TX_RTRDLC);
 }
 
 /************************************************/
