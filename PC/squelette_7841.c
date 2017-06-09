@@ -130,7 +130,7 @@ void com_test(){
   unsigned int i=0;
   unsigned short id=6;
   unsigned short rtr=0;
-  unsigned short dlc=0;
+  unsigned short dlc=8;
 
 
   if(readTBS()>0){
