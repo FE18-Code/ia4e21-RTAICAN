@@ -127,15 +127,27 @@ int readTBS(){
 }
 
 void com_test(){
+  unsigned int i=0;
   unsigned short id=6;
+  unsigned short rtr=0;
   unsigned short dlc=0;
+
 
   if(readTBS()>0){
     /* CAN ID */
     outb((id>>3)&0xFF, SJA1000_REG_TX_ID);
-    outb((inb(SJA1000_REG_TX_RTRDLC)&0x1F)|(id<<5&0xE0), SJA1000_REG_TX_RTRDLC);
+    outb((inb(SJA1000_REG_TX_RTRDLC)&0x1F)|((id<<5)&0xE0), SJA1000_REG_TX_RTRDLC);
+    /* CAN RTR */
+    outb((inb(SJA1000_REG_TX_RTRDLC)&0xEF)|((rtr&0x01)<<4), SJA1000_REG_TX_RTRDLC);
     /* CAN DLC */
     outb((inb(SJA1000_REG_TX_RTRDLC)&0xF0)|(dlc&0x0F), SJA1000_REG_TX_RTRDLC);
+
+    /* TX DATA */
+    for(i=0;i<8;i++){
+      outb(0x66, SJA1000_REG_TX_BYTES+i);
+    }
+    /* TX GO */
+    outb(0x01 ,SJA1000_REG_COMMAND);
   }
 }
 
