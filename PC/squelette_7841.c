@@ -62,9 +62,9 @@ static RT_TASK ma_tache;
 void init_can();
 int can_read(unsigned short *id, unsigned short dlc, void *buffer);
 int can_send(unsigned short id, unsigned short dlc, void *buffer);
-int clearRBS();
-int readRBS();
-int readTBS();
+void clearRBS();
+unsigned char readRBS();
+unsigned char readTBS();
 void can_com_tx(unsigned short id, unsigned short rtr, unsigned short dlc);
 
 /*******************************************************/
@@ -137,6 +137,7 @@ void can_main(){
 
 int can_read(unsigned short *id, unsigned short dlc, void *buffer){
   unsigned int i;
+  unsigned short l_id=0;
 
   if(dlc>8){
     dlc=8;
@@ -149,13 +150,13 @@ int can_read(unsigned short *id, unsigned short dlc, void *buffer){
     }
 
     /* CAN ID */
-    *id=0;
-    *id=inb(SJA1000_REG_RX_ID)<<3;
-    *id|=(inb(SJA1000_REG_RX_RTRDLC)&0xE0)>>5;
+    l_id=inb(SJA1000_REG_RX_ID)<<3;
+    l_id|=(inb(SJA1000_REG_RX_RTRDLC)&0xE0)>>5;
+    *id=l_id;
 
     clearRBS();
   }else{
-    printk("\n\nCAN::read : nothing to read\n");
+    printk("CAN::read : nothing to read\n");
   }
 }
 
@@ -173,32 +174,30 @@ int can_send(unsigned short id, unsigned short dlc, void *buffer){
 
   if(readTBS()>0){
     can_com_tx(id, 0, dlc);
-    printk("can_send:txOK");
+    printk("can_send:txOK\n");
   }else{
-    printk("can_send:failed");
+    printk("can_send:failed\n");
   }
 }
 
 /** clears RBS bit so other msgs can be received
 */
-int clearRBS(){
+void clearRBS(){
   outb((inb(SJA1000_REG_STATUS)&0xFE), SJA1000_REG_STATUS);
 }
 
 /** any msg received ?
   @retval >0 : YES
 */
-int readRBS(){
-  return (int)(inb(SJA1000_REG_STATUS)&0x01);
+unsigned char readRBS(){
+  return (inb(SJA1000_REG_STATUS)&0x01);
 }
 
 /** can transmit msg ?
   @retval >0 : YES
 */
-int readTBS(){
-  int retval;
-
-  return retval=((int)(inb(SJA1000_REG_STATUS)&0x04))>>2;
+unsigned char readTBS(){
+  return ((inb(SJA1000_REG_STATUS)&0x04)>>2);
 }
 
 void can_com_tx(unsigned short id, unsigned short rtr, unsigned short dlc){
