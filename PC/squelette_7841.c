@@ -59,8 +59,9 @@ static unsigned int irq_7841; // IRQ carte CAN
 static RT_TASK ma_tache;
 
 /* custom fcts */
+int can_send(unsigned short id, unsigned short dlc, void *buffer);
 int readTBS();
-void com_test();
+void can_com_tx(unsigned short id, unsigned short rtr, unsigned short dlc);
 
 /*******************************************************/
 /* recherche adresse et IRQ de la carte CAN sur le PCI */
@@ -117,7 +118,18 @@ void init_can(void){
   outb(0xFA, SJA1000_REG_OUTPUT_CTRL);
   outb(0x00, SJA1000_REG_CONTROL); /* no ITs & Reset mode off */
 
-  com_test();
+  char *hello="hello!";
+  char hello[8]={'s', 'a', 'k', 'h', 'e', 'l', 'l', 'o'};
+  can_send(6, 8, (void*)hello);
+}
+
+int can_send(unsigned short id, unsigned short dlc, void *buffer){
+  if(dlc>8){
+    dlc=8;
+  }
+
+  memcpy(SJA1000_REG_TX_BYTES, buffer, dlc);
+  can_com_tx(id, 0, dlc);
 }
 
 int readTBS(){
@@ -126,12 +138,12 @@ int readTBS(){
   return retval=((int)(inb(SJA1000_REG_STATUS)&0x04))>>2;
 }
 
-void com_test(){
-  unsigned int i=0;
-  unsigned short id=6;
-  unsigned short rtr=0;
-  unsigned short dlc=8;
+void can_com_tx(unsigned short id, unsigned short rtr, unsigned short dlc){
+  //unsigned int i=0;
 
+  if(dlc>8){
+    dlc=8;
+  }
 
   if(readTBS()>0){
     /* CAN ID */
@@ -143,9 +155,10 @@ void com_test(){
     outb((inb(SJA1000_REG_TX_RTRDLC)&0xF0)|(dlc&0x0F), SJA1000_REG_TX_RTRDLC);
 
     /* TX DATA */
-    for(i=0;i<8;i++){
-      outb(0x66, SJA1000_REG_TX_BYTES+i);
-    }
+    //for(i=0;i<dlc;i++){
+    //  outb(0x66, SJA1000_REG_TX_BYTES+i);
+    //}
+
     /* TX GO */
     outb(0x01 ,SJA1000_REG_COMMAND);
   }
