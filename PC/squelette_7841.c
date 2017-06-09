@@ -118,18 +118,28 @@ void init_can(void){
   outb(0xFA, SJA1000_REG_OUTPUT_CTRL);
   outb(0x00, SJA1000_REG_CONTROL); /* no ITs & Reset mode off */
 
-  char *hello="hello!";
   char hello[8]={'s', 'a', 'k', 'h', 'e', 'l', 'l', 'o'};
-  can_send(6, 8, (void*)hello);
+  can_send(6, 8, hello);
 }
 
 int can_send(unsigned short id, unsigned short dlc, void *buffer){
+  unsigned int i;
+
   if(dlc>8){
     dlc=8;
   }
 
-  memcpy(SJA1000_REG_TX_BYTES, buffer, dlc);
-  can_com_tx(id, 0, dlc);
+  /* TX DATA */
+  for(i=0;i<dlc;i++){
+    outb(*(char*)(buffer+i), SJA1000_REG_TX_BYTES+i);
+  }
+
+  if(readTBS()>0){
+    can_com_tx(id, 0, dlc);
+    printk("can_send:txOK");
+  }else{
+    printk("can_send:failed");
+  }
 }
 
 int readTBS(){
@@ -139,8 +149,6 @@ int readTBS(){
 }
 
 void can_com_tx(unsigned short id, unsigned short rtr, unsigned short dlc){
-  //unsigned int i=0;
-
   if(dlc>8){
     dlc=8;
   }
@@ -154,13 +162,8 @@ void can_com_tx(unsigned short id, unsigned short rtr, unsigned short dlc){
     /* CAN DLC */
     outb((inb(SJA1000_REG_TX_RTRDLC)&0xF0)|(dlc&0x0F), SJA1000_REG_TX_RTRDLC);
 
-    /* TX DATA */
-    //for(i=0;i<dlc;i++){
-    //  outb(0x66, SJA1000_REG_TX_BYTES+i);
-    //}
-
     /* TX GO */
-    outb(0x01 ,SJA1000_REG_COMMAND);
+    outb(0x01, SJA1000_REG_COMMAND);
   }
 }
 
