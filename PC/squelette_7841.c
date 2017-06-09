@@ -59,6 +59,7 @@ static unsigned int irq_7841; // IRQ carte CAN
 static RT_TASK ma_tache;
 
 /* custom fcts */
+int readTBS();
 void com_test();
 
 /*******************************************************/
@@ -107,24 +108,35 @@ int init_7841(void)
 /********************************************************/
 /*   Initialisation du/des SJA1000                      */
 /********************************************************/
-void init_can(void) 
-{
+void init_can(void){
   outb(0x01, SJA1000_REG_CONTROL); /* Reset mode */
   outb(0xFF, SJA1000_REG_ACC_CODE); /* filter pattern */
   outb(0xFF, SJA1000_REG_ACC_MASK); /* accept all frames */
-  outb(0x03, SJA1000_REG_BUS_TIME0);
-  outb(0x1C, SJA1000_REG_BUS_TIME1);
+  outb(0x03, SJA1000_REG_BUS_TIME0); /* BTR */
+  outb(0x1C, SJA1000_REG_BUS_TIME1); /* BTR */
   outb(0xFA, SJA1000_REG_OUTPUT_CTRL);
   outb(0x00, SJA1000_REG_CONTROL); /* no ITs & Reset mode off */
 
   com_test();
 }
 
-void com_test(){
-#define ID (char)20
+int readTBS(){
+  int retval;
 
-  outb(ID>>3, SJA1000_REG_TX_ID);
-  outb(ID<<8, SJA1000_REG_TX_RTRDLC);
+  return retval=((int)(inb(SJA1000_REG_STATUS)&0x04))>>2;
+}
+
+void com_test(){
+  unsigned short id=6;
+  unsigned short dlc=0;
+
+  if(readTBS()>0){
+    /* CAN ID */
+    outb((id>>3)&0xFF, SJA1000_REG_TX_ID);
+    outb((inb(SJA1000_REG_TX_RTRDLC)&0x1F)|(id<<5&0xE0), SJA1000_REG_TX_RTRDLC);
+    /* CAN DLC */
+    outb((inb(SJA1000_REG_TX_RTRDLC)&0xF0)|(dlc&0x0F), SJA1000_REG_TX_RTRDLC);
+  }
 }
 
 /************************************************/
@@ -132,12 +144,11 @@ void com_test(){
 /************************************************/
 void tache_periodique(long id)
 {
-  while(1)
-    {
+  while(1){
       /* a completer */
 
      rt_task_wait_period();
-}
+  }
 
 }
 
