@@ -8,3 +8,7 @@ default:
 
 clean:
 	rm -f *.o *.ko *~
+
+send:
+	scp squelette_7841.ko rtai@localhost:/tmp/mod/.
+
