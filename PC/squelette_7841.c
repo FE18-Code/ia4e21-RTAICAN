@@ -27,6 +27,7 @@ MODULE_LICENSE("GPL");
 /* define pour gestion PCI CARTE CAN 7841 */
 #define CAN_VENDOR_ID 0x144A
 #define CAN_DEVICE_ID 0x7841
+#define CAN_OUR_ID 8
 
 /* define pour gestion registres CAN 7841 */
 /* CONTROL REGS */
@@ -129,7 +130,7 @@ void can_main(){
 
   init_can();
 
-  can_send(6, 8, hello);
+  can_send(CAN_OUR_ID, 8, hello);
   can_read(&id, 1, hello);
   hello[7]='\0';
   printk("\n\nCAN::read : %s\n\n\n", hello);
@@ -222,12 +223,24 @@ void can_com_tx(unsigned short id, unsigned short rtr, unsigned short dlc){
 /************************************************/
 /* squelette Tache périodique                   */
 /************************************************/
-void tache_periodique(long id)
-{
-  while(1){
-      /* a completer */
+void tache_periodique(long id){
+  unsigned long int n=N_BOUCLE;
+  char hello[8];
+  unsigned short id;  
 
-     rt_task_wait_period();
+  while(n-->0){
+    /* a completer */
+
+    /* TX */
+    hello={'s', 'a', 'k', 'h', 'e', 'l', 'l', 'o'};
+    can_send(CAN_OUR_ID, 8, hello);
+
+    /* RX */
+    can_read(&id, 1, hello);
+    hello[7]='\0';
+    printk("\n\nCAN::read : %s\n\n\n", hello);
+
+    rt_task_wait_period();
   }
 
 }
@@ -238,26 +251,24 @@ int caninit(void) {
   int ierr;
   RTIME now;
 
-   /* init can  */
-   ierr=init_7841();
-   init_can();
+  /* init can  */
+  ierr=init_7841();
+  init_can();
 
-   /* creation taches périodiques*/
-   //rt_set_oneshot_mode();
-   // ierr = rt_task_init(&ma_tache,tache_periodique,0,STACK_SIZE, PRIORITE, 0, 0); 
-   //   start_rt_timer(nano2count(TICK_PERIOD));
-   //now = rt_get_time();
-   // rt_task_make_periodic(&ma_tache, now, nano2count(PERIODE_CONTROL));
+  /* creation taches périodiques*/
+  rt_set_oneshot_mode();
+  ierr = rt_task_init(&ma_tache,tache_periodique,0,STACK_SIZE, PRIORITE, 0, 0); 
+  start_rt_timer(nano2count(TICK_PERIOD));
+  now = rt_get_time();
+  rt_task_make_periodic(&ma_tache, now, nano2count(PERIODE_CONTROL));
  
- 
- return(0);
- 
+  return(0);
 }
 
 void canexit(void) {
   printk("uninstall 7841 CAN PCI driver\n");
-   //stop_rt_timer(); 
-  // rt_task_delete(&ma_tache);
+  stop_rt_timer(); 
+  rt_task_delete(&ma_tache);
 }
 
 module_init(can_main);
