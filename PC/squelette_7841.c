@@ -61,8 +61,8 @@ static RT_TASK ma_tache;
 
 /* custom fcts */
 void init_can();
-int can_read(unsigned short *id, unsigned short dlc, void *buffer);
-int can_send(unsigned short id, unsigned short dlc, void *buffer);
+void can_read(unsigned short *id, unsigned short dlc, void *buffer);
+void can_send(unsigned short id, unsigned short dlc, void *buffer);
 void clearRBS();
 unsigned char readRBS();
 unsigned char readTBS();
@@ -124,19 +124,7 @@ void init_can(void){
   outb(0x00, SJA1000_REG_CONTROL); /* no ITs & Reset mode off */
 }
 
-void can_main(){
-  char hello[8]={'s', 'a', 'k', 'h', 'e', 'l', 'l', 'o'};
-  unsigned short id;  
-
-  init_can();
-
-  can_send(CAN_OUR_ID, 8, hello);
-  can_read(&id, 1, hello);
-  hello[7]='\0';
-  printk("\n\nCAN::read : %s\n\n\n", hello);
-}
-
-int can_read(unsigned short *id, unsigned short dlc, void *buffer){
+void can_read(unsigned short *id, unsigned short dlc, void *buffer){
   unsigned int i;
   unsigned short l_id=0;
 
@@ -161,7 +149,7 @@ int can_read(unsigned short *id, unsigned short dlc, void *buffer){
   }
 }
 
-int can_send(unsigned short id, unsigned short dlc, void *buffer){
+void can_send(unsigned short id, unsigned short dlc, void *buffer){
   unsigned int i;
 
   if(dlc>8){
@@ -184,7 +172,7 @@ int can_send(unsigned short id, unsigned short dlc, void *buffer){
 /** clears RBS bit so other msgs can be received
 */
 void clearRBS(){
-  outb((inb(SJA1000_REG_STATUS)&0xFE), SJA1000_REG_STATUS);
+  outb(0x04, SJA1000_REG_COMMAND);
 }
 
 /** any msg received ?
@@ -223,22 +211,36 @@ void can_com_tx(unsigned short id, unsigned short rtr, unsigned short dlc){
 /************************************************/
 /* squelette Tache périodique                   */
 /************************************************/
-void tache_periodique(long id){
+void tache_periodique(){
   unsigned long int n=N_BOUCLE;
+  unsigned long int i;
   char hello[8];
-  unsigned short id;  
+  unsigned short id;
+  unsigned short dlc;
 
   while(n-->0){
     /* a completer */
 
     /* TX */
-    hello={'s', 'a', 'k', 'h', 'e', 'l', 'l', 'o'};
-    can_send(CAN_OUR_ID, 8, hello);
+    dlc=8;
+    hello[0]='s';
+    hello[1]='a';
+    hello[2]='k';
+    hello[3]='h';
+    hello[4]='e';
+    hello[5]='l';
+    hello[6]='l';
+    hello[7]='o';
+    can_send(CAN_OUR_ID, dlc, hello);
 
     /* RX */
-    can_read(&id, 1, hello);
+    can_read(&id, dlc, hello);
     hello[7]='\0';
-    printk("\n\nCAN::read : %s\n\n\n", hello);
+    printk("\nCAN::read : id=%u \'", id);
+    for(i=0;i<dlc;i++){
+      printk("%02x", (unsigned int)(*(hello+i)));
+    }
+    printk("\'\n\n");
 
     rt_task_wait_period();
   }
@@ -247,7 +249,6 @@ void tache_periodique(long id){
 
 
 int caninit(void) {
-
   int ierr;
   RTIME now;
 
@@ -257,11 +258,11 @@ int caninit(void) {
 
   /* creation taches périodiques*/
   rt_set_oneshot_mode();
-  ierr = rt_task_init(&ma_tache,tache_periodique,0,STACK_SIZE, PRIORITE, 0, 0); 
+  ierr = rt_task_init(&ma_tache, tache_periodique, 0, STACK_SIZE, PRIORITE, 0, 0); 
   start_rt_timer(nano2count(TICK_PERIOD));
   now = rt_get_time();
   rt_task_make_periodic(&ma_tache, now, nano2count(PERIODE_CONTROL));
- 
+
   return(0);
 }
 
@@ -271,5 +272,5 @@ void canexit(void) {
   rt_task_delete(&ma_tache);
 }
 
-module_init(can_main);
+module_init(caninit);
 module_exit(canexit);
