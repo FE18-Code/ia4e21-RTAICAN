@@ -1,8 +1,15 @@
-
 /* Todo module format */
 
 #ifndef CAN_H
 #define CAN_H
+
+#ifdef _CAN_ARCOM2PC
+#define _SJA1000_REGS_BASEADDR (0x180)
+#elseif _CAN_PC2ARCOM
+#define _SJA1000_REGS_BASEADDR (base2)
+#else
+#define _SJA1000_REGS_BASEADDR (base)
+#endif
 
 /* define pour gestion registres CAN 7841 */
 /* CONTROL REGS */
@@ -27,7 +34,7 @@
 
 /** can initialisation function (all registers)
 */
-void init_can();
+void init_can(void);
 
 void can_read(unsigned short *id, unsigned short dlc, void *buffer);
 
@@ -35,17 +42,17 @@ void can_send(unsigned short id, unsigned short dlc, void *buffer);
 
 /** clears RBS bit so other msgs can be received
 */
-void clearRBS();
+void clearRBS(void);
 
 /** any msg received ?
   @retval >0 : YES
 */
-unsigned char readRBS();
+unsigned char readRBS(void);
 
 /** can transmit msg ?
   @retval >0 : YES
 */
-unsigned char readTBS();
+unsigned char readTBS(void);
 
 /** sub-function of can_send()
 */

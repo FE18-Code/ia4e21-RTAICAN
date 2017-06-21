@@ -1,10 +1,9 @@
-
 #include "can.h"
 
 /********************************************************/
 /*   Initialisation du/des SJA1000                      */
 /********************************************************/
-void init_can(){
+void init_can(void){
   outb(0x01, SJA1000_REG_CONTROL); /* Reset mode */
   outb(0xFF, SJA1000_REG_ACC_CODE); /* filter pattern */
   outb(0xFF, SJA1000_REG_ACC_MASK); /* accept all frames */
@@ -97,6 +96,4 @@ void can_com_tx(unsigned short id, unsigned short rtr, unsigned short dlc){
     outb(0x01, SJA1000_REG_COMMAND);
   }
 }
-
-
 
