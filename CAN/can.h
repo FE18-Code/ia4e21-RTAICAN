@@ -4,10 +4,16 @@
 #define CAN_H
 
 #ifdef _CAN_ARCOM2PC
+#undef _SJA1000_REGS_BASEADDR
 #define _SJA1000_REGS_BASEADDR (0x180)
-#elseif _CAN_PC2ARCOM
+#endif
+
+#ifdef _CAN_PC2ARCOM
+#undef _SJA1000_REGS_BASEADDR
 #define _SJA1000_REGS_BASEADDR (base2)
-#else
+#endif
+
+#ifndef _SJA1000_REGS_BASEADDR
 #define _SJA1000_REGS_BASEADDR (base)
 #endif
 

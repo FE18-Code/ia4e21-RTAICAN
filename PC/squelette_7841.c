@@ -14,6 +14,7 @@
 #include <rtai_sched.h>
 #include <rtai_fifos.h>
 
+#define _CAN_PC2ARCOM
 #include "../CAN/can.h"
 
 MODULE_LICENSE("GPL");
@@ -34,7 +35,7 @@ MODULE_LICENSE("GPL");
 /* déclaration variables pour addresse et irq */
 /*  de la carte CAN PCI 7841 */    
 static u32 base;  //adresse de base SJA1000 1
-static u32 base2; //adresse de base sJA1000 2
+static u32 base2; //adresse de base SJA1000 2
 static unsigned int irq_7841; // IRQ carte CAN
 
 /*déclaration de tâches */
